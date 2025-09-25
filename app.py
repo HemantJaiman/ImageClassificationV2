@@ -89,13 +89,26 @@ class PropertyClassifier:
             logger.error(f"Error preprocessing image: {str(e)}")
             raise ValueError(f"Invalid image data: {str(e)}")
     
-    def predict(self, base64_images: Dict[str, str]) -> Dict[str, str]:
-        """Predict classes for multiple images"""
+    def predict(self, input_data: Dict[str, Any]) -> Dict[str, str]:
+        """Predict classes for multiple images with nested structure"""
         results = {}
         
         with torch.no_grad():
-            for image_id, base64_data in base64_images.items():
+            for image_id, image_data in input_data.items():
                 try:
+                    # Extract base64 data from nested structure
+                    base64_data = ""
+                    if isinstance(image_data, dict) and "base64" in image_data:
+                        if isinstance(image_data["base64"], dict) and "data" in image_data["base64"]:
+                            base64_data = str(image_data["base64"]["data"])
+                        else:
+                            base64_data = str(image_data["base64"])
+                    elif isinstance(image_data, str):
+                        # Fallback for direct base64 string
+                        base64_data = image_data
+                    else:
+                        raise ValueError("Invalid image data format")
+                    
                     # Preprocess image
                     image_tensor = self.preprocess_image(base64_data)
                     
@@ -103,25 +116,19 @@ class PropertyClassifier:
                     outputs = self.model(image_tensor)
                     probabilities = torch.nn.functional.softmax(outputs, dim=1)
                     predicted_class_idx = torch.argmax(probabilities, dim=1).item()
-                    confidence = probabilities[0][predicted_class_idx].item()
+                    confidence = probabilities[0][int(predicted_class_idx)].item()
                     
                     # Map to class name
                     predicted_class = self.class_mapping[str(predicted_class_idx)]
                     
-                    # Store result with confidence
-                    results[image_id] = {
-                        "predicted_class": predicted_class,
-                        "confidence": f"{confidence:.4f}",
-                        "confidence_percentage": f"{confidence * 100:.2f}%"
-                    }
+                    # Store result - simple format as requested
+                    results[image_id] = predicted_class
                     
                     logger.info(f"Image {image_id}: {predicted_class} ({confidence:.4f})")
                     
                 except Exception as e:
                     logger.error(f"Error predicting image {image_id}: {str(e)}")
-                    results[image_id] = {
-                        "error": f"Prediction failed: {str(e)}"
-                    }
+                    results[image_id] = f"Error: {str(e)}"
         
         return results
 
@@ -211,15 +218,8 @@ def predict():
         # Perform predictions
         results = classifier.predict(data)
         
-        # Return results
-        response = {
-            "status": "success",
-            "timestamp": datetime.now().isoformat(),
-            "total_images": len(data),
-            "predictions": results
-        }
-        
-        return jsonify(response), 200
+        # Return results in simple format as requested
+        return jsonify(results), 200
         
     except Exception as e:
         logger.error(f"Prediction error: {str(e)}")
