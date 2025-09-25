@@ -148,8 +148,8 @@ def load_classifier():
     # Find the best model (prioritize target_95_model, then best_model)
     model_files = [f for f in os.listdir(models_dir) if f.endswith('.pth')]
     
-    target_models = [f for f in model_files if f.startswith('target_95_model_')]
-    best_models = [f for f in model_files if f.startswith('best_model_')]
+    target_models = [f for f in model_files if f.startswith('target_95_model')]
+    best_models = [f for f in model_files if f.startswith('best_model')]
     
     if target_models:
         # Use the most recent target model
