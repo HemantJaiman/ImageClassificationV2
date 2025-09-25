@@ -423,23 +423,28 @@ def internal_error(error):
     }), 500
 
 if __name__ == '__main__':
+    # Local run (python app.py)
     try:
         logger.info("Starting Flask application...")
-        
-        # Load the classifier on startup
-        logger.info("Loading classifier on startup...")
+        logger.info("Loading classifier on startup (local mode)...")
         load_classifier()
-        logger.info("Classifier loaded successfully")
-        
+        logger.info("Classifier loaded successfully (local mode)")
+
         # Get port from environment (Cloud Run sets PORT env var)
         port = int(os.environ.get('PORT', 8080))
         logger.info(f"Starting server on port: {port}")
-        
+
         # Run the app
-        logger.info("Starting Flask server...")
         app.run(host='0.0.0.0', port=port, debug=False)
-        
+
     except Exception as e:
-        error_msg = f"Failed to start application: {str(e)}"
-        logger.error(error_msg)
+        logger.error(f"Failed to start application: {e}")
         raise
+else:
+    # Gunicorn / Cloud Run mode
+    try:
+        logger.info("Loading classifier at module import (Gunicorn mode)...")
+        load_classifier()
+        logger.info("Classifier loaded successfully (Gunicorn mode)")
+    except Exception as e:
+        logger.error(f"Failed to load classifier during startup (Gunicorn): {e}")
