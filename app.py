@@ -198,14 +198,19 @@ class PropertyClassifier:
                     
                     logger.info(f"Prediction for {image_id}: class_idx={predicted_class_idx}, confidence={confidence:.4f}")
                     
-                    # Map to class name
-                    if str(predicted_class_idx) not in self.class_mapping:
-                        error_msg = f"Predicted class index {predicted_class_idx} not found in class mapping for {image_id}"
-                        logger.error(error_msg)
-                        raise ValueError(error_msg)
-                    
-                    predicted_class = self.class_mapping[str(predicted_class_idx)]
-                    logger.info(f"Mapped class index {predicted_class_idx} to class name: {predicted_class} for {image_id}")
+                    # Apply confidence threshold (50%)
+                    if confidence < 0.5:
+                        predicted_class = "Undefined"
+                        logger.info(f"Confidence {confidence:.4f} is below 50% threshold for {image_id}, returning 'Undefined'")
+                    else:
+                        # Map to class name
+                        if str(predicted_class_idx) not in self.class_mapping:
+                            error_msg = f"Predicted class index {predicted_class_idx} not found in class mapping for {image_id}"
+                            logger.error(error_msg)
+                            raise ValueError(error_msg)
+                        
+                        predicted_class = self.class_mapping[str(predicted_class_idx)]
+                        logger.info(f"Mapped class index {predicted_class_idx} to class name: {predicted_class} for {image_id}")
                     
                     # Store result - simple format as requested
                     results[image_id] = predicted_class
