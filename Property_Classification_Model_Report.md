@@ -1,6 +1,4 @@
 # Property Image Classification Model Report
-**Generated on:** September 16, 2025
-**Model Training Session:** 20250916_111900
 
 ---
 
